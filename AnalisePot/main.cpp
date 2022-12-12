@@ -1,11 +1,20 @@
 #include "analisepot.h"
-
+#include <iostream>
 #include <QApplication>
 #include <QLocale>
 #include <QTranslator>
+#include <fstream>
+#include <sstream>
+#include <string>
+
+using namespace std;
 
 int main(int argc, char *argv[])
 {
+    //ifstream inputFile;
+    //inputFile.open("C:\\Documents/GitHub/Prg-orientada-a-obj/M1.csv");
+
+
     QApplication a(argc, argv);
 
     QTranslator translator;

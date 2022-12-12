@@ -15,6 +15,7 @@ public:
     AnalisePot(QWidget *parent = nullptr);
     ~AnalisePot();
 
+
 private slots:
     void binary_button_pressed();
     void on_ENTER_released();
