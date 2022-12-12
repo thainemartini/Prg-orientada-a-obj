@@ -10,17 +10,7 @@ AnalisePot::AnalisePot(QWidget *parent)
 
 {
     ui->setupUi(this);
-    QVector<double> x(3000),y(30);
 
- for (int i=0;i<3000;i++){
-     x[i]=i;
-
-
-        }
- for (int j=0;j<30;j++){
-
-         y[j]=j;
-    }
 
     connect(ui->M1,SIGNAL(released()),this,SLOT(binary_button_pressed()));
     connect(ui->M2,SIGNAL(released()),this,SLOT(binary_button_pressed()));
@@ -41,7 +31,7 @@ AnalisePot::AnalisePot(QWidget *parent)
     ui->customplot->addGraph();
     ui->customplot->graph(0)->setScatterStyle(QCPScatterStyle::ssCircle);
     ui->customplot->graph(0)->setLineStyle(QCPGraph::lsLine);
-    ui->customplot->graph(0)->setData(x,y);
+   // ui->customplot->graph(0)->setData(x,y);
     ui->customplot->yAxis2->setVisible(true);
     ui->customplot->xAxis->setLabel("Tempo");
     ui->customplot->yAxis->setLabel("Corrente");
