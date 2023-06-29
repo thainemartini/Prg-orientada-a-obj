@@ -1,98 +1,230 @@
-#include <iostream>
 #include <QApplication>
 #include <QGridLayout>
-#include <QLabel>
-#include <QVBoxLayout>
+#include <QPushButton>
 #include <QWidget>
-#include <cstdlib> // Incluindo a biblioteca para usar std::rand()
+#include <cstdlib>
+#include <ctime>
+#include <QLabel>
+#include <vector>
+#include <iostream>
+
+int score=0;
 
 class Barco {
 public:
+    Barco() : com_barco(false) {}
+
+    bool com_barco;
     Barco(int linha, int coluna) : linha(linha), coluna(coluna) {}
 
-private:
-    int linha;
-    int coluna;
+        int getLinha() const { return linha; }
+        int getColuna() const { return coluna; }
+
+    private:
+        int linha;
+        int coluna;
+
 };
 
-template <typename BarcoType>
-class Tabuleiro : public QWidget {
+class TabuleiroJogador : public QWidget {
 public:
-    Tabuleiro(QWidget* parent = nullptr) : QWidget(parent) {
-        gridLayout = new QGridLayout(this);
+    TabuleiroJogador(QWidget* parent = nullptr) : QWidget(parent), contadorCliques(0) {
+        QGridLayout* gridLayout = new QGridLayout(this);
         gridLayout->setSpacing(0);
         gridLayout->setContentsMargins(0, 0, 0, 0);
 
-        // Inicializa o tabuleiro vazio
         for (int i = 0; i < 10; ++i) {
             for (int j = 0; j < 10; ++j) {
-                QLabel* label = new QLabel(this);
-                label->setFrameStyle(QFrame::Box);
-                label->setAlignment(Qt::AlignCenter);
-                gridLayout->addWidget(label, i, j);
-                celulas[i][j] = label;
+                QPushButton* button = new QPushButton(this);
+                button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+                gridLayout->addWidget(button, i, j);
+
+                // Conecta o sinal clicked do botão à função onButtonClicked
+                connect(button, &QPushButton::clicked, this, [this, button]() {
+                    onButtonClicked(button);
+                });
+
+                // Inicializa o barco como nullptr para todas as posições
+                botoes[i][j] = nullptr;
             }
         }
     }
 
-    void colocarBarco(int linha, int coluna, BarcoType* barco) {
-        if (linha >= 0 && linha < 10 && coluna >= 0 && coluna < 10) {
-            QLabel* label = celulas[linha][coluna];
+    Barco* getBarcoAtPosicao(int linha, int coluna) {
+        if (botoes[linha][coluna])
+            return &botoes[linha][coluna]->barco;
+        else
+            return nullptr;
+    }
 
+    struct Botao {
+        QPushButton* button;
+        Barco barco;
+    };
+
+    Botao* botoes[10][10]; // Matriz de botões do tabuleiro do jogador
+    int contadorCliques; // Contador de cliques realizados
+
+private:
+    void onButtonClicked(QPushButton* button) {
+        if (contadorCliques <= 3){  // Limite de 3 cliques
+
+            button->setEnabled(false);
+            button->setStyleSheet("background-color: gray");
+       }
+        else {
+              new QLabel("Todos barcos estão no tabuleiro");
+              return;
         }
+        // Encontra a posição do botão clicado
+        int linha = -1;
+        int coluna = -1;
+        for (int i = 0; i < 10; ++i) {
+            for (int j = 0; j < 10; ++j) {
+                if (botoes[i][j] && botoes[i][j]->button == button) {
+                    linha = i;
+                    coluna = j;
+                    break;
+                }
+            }
+            if (linha != -1 && coluna != -1)
+                break;
+        }
+
+        // Atualiza a posição do barco no TabuleiroJogador
+        if (linha != -1 && coluna != -1) {
+            if (!botoes[linha][coluna]) {
+                Botao* novoBotao = new Botao;
+                novoBotao->button = button;
+                botoes[linha][coluna] = novoBotao;
+            }
+            botoes[linha][coluna]->barco.com_barco = true;
+            contadorCliques++;
+        }
+    }
+};
+
+class TabuleiroAdversario : public QWidget {
+public:
+    TabuleiroAdversario(QWidget* parent = nullptr) : QWidget(parent) {
+        gridLayout = new QGridLayout(this);
+        gridLayout->setSpacing(0);
+        gridLayout->setContentsMargins(0, 0, 0, 0);
+
+        for (int i = 0; i < 10; ++i) {
+            for (int j = 0; j < 10; ++j) {
+                QPushButton* button = new QPushButton(this);
+                button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+                connect(button, &QPushButton::clicked, this, [this, button]() {
+                    onButtonClicked(button);
+                });
+                gridLayout->addWidget(button, i, j);
+                buttons[i][j] = button;
+            }
+        }
+
+        colocarBarcosAleatorios();
     }
 
 private:
     QGridLayout* gridLayout;
-    QLabel* celulas[10][10];
-};
+    QPushButton* buttons[10][10];
+    std::vector<Barco> barcos;
 
-int main(int argc, char** argv) {
-    QApplication app(argc, argv);
+    void colocarBarcosAleatorios() {
+        srand(time(0));
 
-    // Criação do tabuleiro widget para o tabuleiro aleatório
-    Tabuleiro<Barco> tabuleiroOponente;
+        while (barcos.size() < 3) {
+            int linha = rand() % 10;
+            int coluna = rand() % 10;
+            Barco barco(linha, coluna);
+            bool posicaoRepetida = false;
 
-    // Coloca os barcos no tabuleiro aleatoriamente
-    for (int i = 0; i < 3; ++i) {
-        int linha = std::rand() % 10; // Gera uma posição aleatória de linha
-        int coluna = std::rand() % 10; // Gera uma posição aleatória de coluna
-        Barco* novoBarco;
-        if (i == 0)
-            novoBarco = new Barco(1, 2);   // Tamanho 1x2
-        else if (i == 1)
-            novoBarco = new Barco(1, 5);   // Tamanho 1x5
-        else
-            novoBarco = new Barco(1, 3);   // Tamanho 1x3
-        tabuleiroOponente.colocarBarco(linha, coluna, novoBarco);
+            for (const auto& b : barcos) {
+                if (b.getLinha() == linha && b.getColuna() == coluna) {
+                    posicaoRepetida = true;
+                    break;
+                }
+            }
+
+            if (!posicaoRepetida) {
+                barcos.push_back(barco);
+                buttons[linha][coluna]->setProperty("com_barco", true);
+            }
+        }
     }
 
-    // Criação do tabuleiro widget para o tabuleiro com os barcos
-    Tabuleiro<Barco> tabuleiroJogador;
+    void onButtonClicked(QPushButton* button) {
+        button->setEnabled(false);
 
-    // Solicita ao usuário a posição para o barco1
-    int linha, coluna;
-    std::cout << "Digite a posição (linha coluna) para o barco1 (1x2): ";
-    std::cin >> linha >> coluna;
+        int linha = -1, coluna = -1;
+        for (int i = 0; i < 10; ++i) {
+            for (int j = 0; j < 10; ++j) {
+                if (buttons[i][j] == button) {
+                    linha = i;
+                    coluna = j;
+                    break;
+                }
+            }
+            if (linha != -1 && coluna != -1)
+                break;
+        }
 
-    // Cria o barco1 e coloca no tabuleiro com os barcos
-    Barco* barco1 = new Barco(1, 2);   // Tamanho 1x2
-    tabuleiroJogador.colocarBarco(linha, coluna, barco1);
+        if (button->property("com_barco").isValid()) {
+            button->setStyleSheet("background-color: red");
+            score ++;
+            if (score == 3) {
 
-    // Cria janelas para exibir os tabuleiros
-    QWidget tabuleiroOponenteWindow;
-    tabuleiroOponenteWindow.setLayout(new QVBoxLayout);
-    tabuleiroOponenteWindow.layout()->addWidget(&tabuleiroOponente);
-    tabuleiroOponenteWindow.setWindowTitle("Tabuleiro do Oponente");
-    tabuleiroOponenteWindow.setGeometry(100, 100, 400, 400);
-    tabuleiroOponenteWindow.show();
+                QApplication::closeAllWindows();
 
-    QWidget tabuleiroJogadorWindow;
-    tabuleiroJogadorWindow.setLayout(new QVBoxLayout);
-    tabuleiroJogadorWindow.layout()->addWidget(&tabuleiroJogador);
-    tabuleiroJogadorWindow.setWindowTitle("Tabuleiro do Jogador");
-    tabuleiroJogadorWindow.setGeometry(600, 100, 400, 400);
-    tabuleiroJogadorWindow.show();
+                QWidget* vitoriaWindow = new QWidget;
+                QVBoxLayout* layout = new QVBoxLayout(vitoriaWindow);
+                QLabel* label = new QLabel("Parabéns, você venceu!", vitoriaWindow);
+                // Definindo o tamanho da fonte
+               QFont font = label->font();
+               font.setPointSize(30);
+               label->setFont(font);
+               label->setAlignment(Qt::AlignCenter);
+               layout->addWidget(label);
+               vitoriaWindow->setLayout(layout);
+               vitoriaWindow->showMaximized(); // Maximiza a janela na tela
+               vitoriaWindow->setAttribute(Qt::WA_DeleteOnClose); // Define a propriedade para deletar a janela ao fechá-la
+                }
+        }
+            else {
+                button->setStyleSheet("background-color: blue");
+        }
+    }
+};
 
-    return app.exec();
+int main(int argc, char* argv[]) {
+    std::srand(std::time(nullptr)); // Inicializa a semente para geração de números aleatórios
+
+    QApplication app(argc, argv);
+
+    TabuleiroJogador tabuleiroJogador; // Cria o tabuleiro do jogador
+    TabuleiroAdversario tabuleiroAdversario(&tabuleiroJogador); // Cria o tabuleiro do adversário passando o tabuleiro do jogador como referência
+
+    QWidget window;
+    QVBoxLayout* layout = new QVBoxLayout(&window);
+
+    // Adiciona o TabuleiroJogador com um título
+    QVBoxLayout* tabuleiroJogadorLayout = new QVBoxLayout;
+    QLabel* tabuleiroJogadorLabel = new QLabel("Tabuleiro do Jogador");
+    tabuleiroJogadorLabel->setAlignment(Qt::AlignCenter);
+    tabuleiroJogadorLayout->addWidget(tabuleiroJogadorLabel);
+    tabuleiroJogadorLayout->addWidget(&tabuleiroJogador);
+    layout->addLayout(tabuleiroJogadorLayout);
+
+    // Adiciona o TabuleiroAdversario com um título
+    QVBoxLayout* tabuleiroAdversarioLayout = new QVBoxLayout;
+    QLabel* tabuleiroAdversarioLabel = new QLabel("Tabuleiro do Adversário");
+    tabuleiroAdversarioLabel->setAlignment(Qt::AlignCenter);
+    tabuleiroAdversarioLayout->addWidget(tabuleiroAdversarioLabel);
+    tabuleiroAdversarioLayout->addWidget(&tabuleiroAdversario);
+    layout->addLayout(tabuleiroAdversarioLayout);
+
+    window.show();
+
+    return app.exec(); // Executa a aplicação Qt
 }
