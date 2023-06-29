@@ -67,43 +67,46 @@ public:
 
 private:
     void onButtonClicked(QPushButton* button) {
-        if (contadorCliques <= 3){  // Limite de 3 cliques
+        if (contadorCliques < 3){  // Limite de 3 cliques
 
             button->setEnabled(false);
             button->setStyleSheet("background-color: gray");
-       }
+
+            // Encontra a posição do botão clicado
+            int linha = -1;
+            int coluna = -1;
+            for (int i = 0; i < 10; ++i) {
+                for (int j = 0; j < 10; ++j) {
+                    if (botoes[i][j] && botoes[i][j]->button == button) {
+                        linha = i;
+                        coluna = j;
+                        break;
+                    }
+                }
+                if (linha != -1 && coluna != -1)
+                    break;
+            }
+
+            // Atualiza a posição do barco no TabuleiroJogador
+            if (linha != -1 && coluna != -1) {
+                if (!botoes[linha][coluna]) {
+                    Botao* novoBotao = new Botao;
+                    novoBotao->button = button;
+                    botoes[linha][coluna] = novoBotao;
+                }
+                botoes[linha][coluna]->barco.com_barco = true;
+
+            }
+            contadorCliques++;
+        }
+
+
         else {
               new QLabel("Todos barcos estão no tabuleiro");
               return;
         }
-        // Encontra a posição do botão clicado
-        int linha = -1;
-        int coluna = -1;
-        for (int i = 0; i < 10; ++i) {
-            for (int j = 0; j < 10; ++j) {
-                if (botoes[i][j] && botoes[i][j]->button == button) {
-                    linha = i;
-                    coluna = j;
-                    break;
-                }
-            }
-            if (linha != -1 && coluna != -1)
-                break;
-        }
-
-        // Atualiza a posição do barco no TabuleiroJogador
-        if (linha != -1 && coluna != -1) {
-            if (!botoes[linha][coluna]) {
-                Botao* novoBotao = new Botao;
-                novoBotao->button = button;
-                botoes[linha][coluna] = novoBotao;
-            }
-            botoes[linha][coluna]->barco.com_barco = true;
-            contadorCliques++;
-        }
-    }
-};
-
+      }
+  };
 class TabuleiroAdversario : public QWidget {
 public:
     TabuleiroAdversario(QWidget* parent = nullptr) : QWidget(parent) {
@@ -223,7 +226,7 @@ int main(int argc, char* argv[]) {
     tabuleiroAdversarioLayout->addWidget(tabuleiroAdversarioLabel);
     tabuleiroAdversarioLayout->addWidget(&tabuleiroAdversario);
     layout->addLayout(tabuleiroAdversarioLayout);
-
+    
     window.show();
 
     return app.exec(); // Executa a aplicação Qt
