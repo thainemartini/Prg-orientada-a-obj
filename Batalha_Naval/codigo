@@ -229,5 +229,5 @@ int main(int argc, char* argv[]) {
     
     window.show();
 
-    return app.exec(); // Executa a aplicação Qt
+    return app.exec(); 
 }
