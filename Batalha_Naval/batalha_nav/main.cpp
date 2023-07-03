@@ -30,7 +30,7 @@ public:
   }
 
 private:
-    int contadorCliques; // Contador de barcos
+    int contadorCliques=0; // Contador de barcos
     int score =0;//Pontuacao
     QGridLayout* gridLayout;
     QPushButton* buttons[10][10];
